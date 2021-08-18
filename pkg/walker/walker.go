@@ -1,10 +1,9 @@
 package walker
 
 import (
+	"io/fs"
 	"os"
 	"path/filepath"
-
-	"github.com/get-woke/fastwalk"
 )
 
 // Walk is a helper function that will automatically skip the `.git` directory.
@@ -12,14 +11,14 @@ import (
 // tl;dr since filepath.Walk get a complete FileInfo for every file,
 // it's inherently slow. See https://github.com/golang/go/issues/16399
 func Walk(root string, walkFn func(path string, typ os.FileMode) error) error {
-	return fastwalk.Walk(root, func(path string, typ os.FileMode) error {
+	return filepath.Walk(root, func(path string, info fs.FileInfo, err error) error {
 		path = filepath.Clean(path)
 
-		if typ.IsDir() && isDotGit(path) {
+		if info.IsDir() && isDotGit(path) {
 			return filepath.SkipDir
 		}
 
-		return walkFn(path, typ)
+		return walkFn(path, info.Mode())
 	})
 }
 
